@@ -124,7 +124,7 @@ const loginUser = asyncHandler( async (req, res) => {
 
     // console.log(user);
     
-    const {refreshToken, accessToken } = await generateAccesAndRefreshToken(user._id)
+    const {refreshToken, accessToken} = await generateAccesAndRefreshToken(user._id)
 
     // console.log(user);
 
@@ -143,7 +143,9 @@ const loginUser = asyncHandler( async (req, res) => {
         new apiResponse(
             200,
             {
-                user : loggedInUser, refreshToken, accessToken
+                user : loggedInUser,
+                refreshToken,
+                accessToken
             },
             "User logged In Successfully"
         )
@@ -180,5 +182,4 @@ export {
     registerUser,
     loginUser,
     logoutUser
-
 }
