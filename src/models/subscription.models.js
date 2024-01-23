@@ -13,4 +13,4 @@ const subscriptionSchema = new Schema({
     }
 }, {timestamps : true})
 
-export const subscription = mongoose.Model("subscription",subscriptionSchema)
+export const Subscription = mongoose.Model("Subscription",subscriptionSchema)
