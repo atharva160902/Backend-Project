@@ -182,21 +182,30 @@ const logoutUser = asyncHandler( async (req, res) => {
 
 const refreshAccessToken = asyncHandler( async (req, res) => {
 
-    const incomingRefreshToken = req.cookie?.refreshToken || req.body?.refreshToken
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+
+    // console.log("refreshtoken ------------",incomingRefreshToken);
 
     if(!incomingRefreshToken){
-        throw new apiError(401,"Invalid access token")
+        throw new apiError(401,"Invalid refresh token")
     }
 
     try {
         const decodedToken = jwt.verify(incomingRefreshToken,process.env.REFRESH_TOKEN_SECRET)
+
+        // console.log("------",decodedToken);
     
-        const user = User.findById(decodedToken?._id)
+        const user = await User.findById(decodedToken?._id)
+
         if (!user) {
             throw new apiError(401, "Invalid refresh token")
         }
+
+        // console.log("--------",user)
+        // console.log("--------",incomingRefreshToken)
+        // console.log("--------",user.refreshToken)
     
-        if(incomingRefreshToken !== user?.refreshToken){
+        if(incomingRefreshToken !== user.refreshToken){
             throw new apiError(401, "Refresh token is expired or used")
         }
     
@@ -450,6 +459,7 @@ const getWatchHistory = asyncHandler( async (req, res) => {
             }
         }
     ])
+    // console.log(user);
     return res
     .status(200)
     .json(new apiResponse(200,user[0].watchHistory,"watch history fetched successfully"))
