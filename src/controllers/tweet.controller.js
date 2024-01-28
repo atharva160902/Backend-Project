@@ -10,7 +10,7 @@ const createTweet = asyncHandler(async (req, res) => {
     const {content} = req.body
 
     if(!content){
-        throw apiError(400,"Tweet cannot be empty")
+        throw new apiError(400,"Tweet cannot be empty")
     }
 
     const tweet = await Tweet.create({
@@ -20,7 +20,7 @@ const createTweet = asyncHandler(async (req, res) => {
 
     return res
     .status(201)
-    .json(apiResponse(201, tweet, "Tweet created Successfully"))
+    .json(new apiResponse(201, tweet, "Tweet created Successfully"))
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
@@ -29,14 +29,14 @@ const getUserTweets = asyncHandler(async (req, res) => {
     // const userId = req.user?._id
 
     if(!isValidObjectId(userId)){
-        throw apiError(400, "Invalid user id")
+        throw new apiError(400, "Invalid user id")
     }
 
     const tweets = await Tweet.find({owner: userId})
 
     return res
     .status(200)
-    .json(apiResponse(200, tweets, "User tweets retrieved successfully"))
+    .json(new apiResponse(200, tweets, "User tweets retrieved successfully"))
 
 
 })
@@ -47,18 +47,18 @@ const updateTweet = asyncHandler(async (req, res) => {
     const {content} = req.body
 
     if(!isValidObjectId(tweetId)){
-        throw apiError(400, "Invalid tweet id")
+        throw new apiError(400, "Invalid tweet id")
     }
 
-    if(content.trim().length === 0){
-        throw apiError(400, "Tweet cannot be empty")
+    if(content.trim() === ""){
+        throw new apiError(400, "Tweet cannot be empty")
     }
 
     const tweet = await Tweet.findByIdAndUpdate(
         tweetId,
         {
             $set : {
-                content : content
+                content
             }
         },
         {
@@ -74,17 +74,17 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
-    const tweetId = req.params
+    const {tweetId} = req.params
 
     if(!isValidObjectId(tweetId)){
-        throw apiError(400, "Invalid tweet id")
+        throw new apiError(400, "Invalid tweet id")
     }
 
     const tweet = await Tweet.findByIdAndDelete(tweetId)
 
     return res
     .status(200)
-    .json(200,tweet,"Tweet deleted successfully")
+    .json(new apiResponse(200,tweet,"Tweet deleted successfully"))
 })
 
 export {
