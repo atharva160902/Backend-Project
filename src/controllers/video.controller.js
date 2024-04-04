@@ -19,10 +19,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // sortType - ascending , descending
     // sort by UserId i.e get all the videos of user
 
+    
     const options = {
         page : parseInt(page,10) || 1,
         limit : parseInt(limit,10) || 10
     }
+    console.log(options);
 
     const pipeline = []
 
@@ -39,63 +41,88 @@ const getAllVideos = asyncHandler(async (req, res) => {
         pipeline.push({
             $sort: { sortBy: sortType === "ascending" ? 1 : -1 }
         })
-
     }
 
-    pipeline.push({
-        $match: { isPublic: true }
-    })
+    // pipeline.push({
+    //     $match: { isPublished: true }
+    // })
 
     if (userId) {
         if (!isValidObjectId(userId)) {
             throw new apiError(400, "Invalid userId");
         }
+        console.log("userId",userId);
         pipeline.push({
             $match: { owner: mongoose.Types.ObjectId(userId) }
         })
     }
 
+    // pipeline.push(
+    //     {
+    //       $lookup: {
+    //         from: "users",
+    //         localField: "owner",
+    //         foreignField: "_id",
+    //         as: "ownerDetails",
+    //       }
+    //     },
+    //     {
+    //       $unwind: "$ownerDetails"
+    //     },
+    //     {
+    //       $project: {
+    //         title: 1,
+    //         description: 1,
+    //         videoFile: 1,
+    //         thumbnail: 1,
+    //         owner: 1,
+    //         duration: 1,
+    //         views: 1,
+    //         isPublished: 1,
+    //         ownerDetails: {
+    //           _id: 1,
+    //           fullName: 1,
+    //           username: 1,
+    //           email: 1,
+    //           avatar: 1,
+    //         }
+    //       }
+    //     }
+    // )
     pipeline.push(
         {
-          $lookup: {
-            from: "users",
-            localField: "owner",
-            foreignField: "_id",
-            as: "ownerDetails",
-          }
-        },
-        {
-          $unwind: "$ownerDetails"
-        },
-        {
-          $project: {
-            title: 1,
-            description: 1,
-            videoFile: 1,
-            thumbnail: 1,
-            owner: 1,
-            duration: 1,
-            views: 1,
-            isPublished: 1,
-            ownerDetails: {
-              _id: 1,
-              fullName: 1,
-              username: 1,
-              email: 1,
-              avatar: 1,
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerDetails",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            "avatar.url": 1
+                        }
+                    }
+                ]
             }
-          }
+        },
+        {
+            $unwind: "$ownerDetails"
         }
     )
 
+    console.log("pipline",pipeline)
+    
     const videos = await Video.aggregate(pipeline);
-
-    const videoPaginated = await Video.aggregatePaginate(videos, options)
+    console.log("videos",videos)
+    
+    const videosPaginated = await Video.aggregatePaginate(videos,options)
+    console.log("videoPaginated",videosPaginated)
     
     return res
     .status(200)
     .json(
-        new apiResponse(200,videoPaginated,"videos fetched successfully")
+        new apiResponse(200,videosPaginated,"videos fetched successfully")
     )
 })
 
@@ -184,13 +211,16 @@ const updateVideo = asyncHandler(async (req, res) => {
 
     const obj = {}
 
+    console.log(req.files)
     const thumbnailLocalPath = req.files?.thumbnail[0].path;
+    console.log(thumbnailLocalPath);
 
     if (thumbnailLocalPath) {
         const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
         if (!thumbnail) {
             throw new apiError(500, "Error while uploading thumbnail");
         }
+        console.log("thumbnail",thumbnail);
         obj.thumbnail = thumbnail.url;
     }
 
@@ -237,7 +267,13 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new apiError(403, "You are not authorized to perform this action");
     }
 
-    await deleteFromCloudinary(video.videoFile)
+    const videoDeleted = await Video.findByIdAndDelete(video?._id);
+
+    if (!videoDeleted) {
+        throw new apiError(500, "Failed to delete video");
+    }
+
+    await deleteFromCloudinary(video.videoFile, "video")
     await deleteFromCloudinary(video.thumbnail)
 
     return res
