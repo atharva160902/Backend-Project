@@ -209,7 +209,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new apiError(400, "Invalid videoId");
     }
 
-    const obj = {}
+    let obj = {}
 
     console.log(req.files)
     const thumbnailLocalPath = req.files?.thumbnail[0].path;
