@@ -29,13 +29,13 @@ import dashboardRouter from './routes/dashboard.routes.js'
 import healthcheckRouter from './routes/healthcheck.routes.js'
 
 // declarations
-app.use("/api/v1/users", userRouter);       //https://localhost:8000/api/v1/users/
-app.use("/api/v1/videos", videoRouter);
-app.use("/api/v1/comments", commentRouter);
-app.use("/api/v1/subscriptions", subscriptionRouter);
-app.use("/api/v1/tweets", tweetRouter);   // https://localhost:8000/api/v1/tweets/
-app.use("/api/v1/likes", likeRouter);
-app.use("/api/v1/playlists", playlistRouter);
+app.use("/api/v1/user", userRouter);       //https://localhost:8000/api/v1/users/
+app.use("/api/v1/video", videoRouter);
+app.use("/api/v1/comment", commentRouter);
+app.use("/api/v1/subscription", subscriptionRouter);
+app.use("/api/v1/tweet", tweetRouter);   // https://localhost:8000/api/v1/tweets/
+app.use("/api/v1/like", likeRouter);
+app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/healthcheck", healthcheckRouter);
 

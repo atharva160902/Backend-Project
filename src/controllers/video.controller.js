@@ -11,7 +11,7 @@ import {uploadOnCloudinary ,deleteFromCloudinary} from "../utils/cloudinary.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page, limit, query, sortBy, sortType, userId } = req.query
     // get all videos based on query, sort, pagination
-    // run a query -
+    // run a query - 
     // we also check for query i.e. through which we can search from search bar
     // also important take care of not showing videos with isPublic = false
     // first check for page and limit
@@ -43,9 +43,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
         })
     }
 
-    // pipeline.push({
-    //     $match: { isPublished: true }
-    // })
+    pipeline.push({
+        $match: { isPublished: true }
+    })
 
     if (userId) {
         if (!isValidObjectId(userId)) {
@@ -57,38 +57,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
         })
     }
 
-    // pipeline.push(
-    //     {
-    //       $lookup: {
-    //         from: "users",
-    //         localField: "owner",
-    //         foreignField: "_id",
-    //         as: "ownerDetails",
-    //       }
-    //     },
-    //     {
-    //       $unwind: "$ownerDetails"
-    //     },
-    //     {
-    //       $project: {
-    //         title: 1,
-    //         description: 1,
-    //         videoFile: 1,
-    //         thumbnail: 1,
-    //         owner: 1,
-    //         duration: 1,
-    //         views: 1,
-    //         isPublished: 1,
-    //         ownerDetails: {
-    //           _id: 1,
-    //           fullName: 1,
-    //           username: 1,
-    //           email: 1,
-    //           avatar: 1,
-    //         }
-    //       }
-    //     }
-    // )
     pipeline.push(
         {
             $lookup: {
@@ -100,7 +68,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1
+                            avatar: 1
                         }
                     }
                 ]
@@ -111,13 +79,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
         }
     )
 
-    console.log("pipline",pipeline)
+    // console.log("pipline",pipeline)
     
     const videos = await Video.aggregate(pipeline);
-    console.log("videos",videos)
+    // console.log("videos",videos)
     
     const videosPaginated = await Video.aggregatePaginate(videos,options)
-    console.log("videoPaginated",videosPaginated)
+    // console.log("videoPaginated",videosPaginated)
     
     return res
     .status(200)
@@ -186,16 +154,124 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new apiError(400, "Invalid videoId");
     }
 
-    const video = await Video.findById(videoId)
+    if (!isValidObjectId(req.user?._id)) {
+        throw new apiError(400, "Invalid userId");
+    }
+
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as: "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            subscribersCount: {
+                                $size: "$subscribers"
+                            },
+                            isSubscribed: {
+                                $cond: {
+                                    if: {
+                                        $in: [
+                                            req.user?._id,
+                                            "$subscribers.subscriber"
+                                        ]
+                                    },
+                                    then: true,
+                                    else: false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            username: 1,
+                            "avatar.url": 1,
+                            subscribersCount: 1,
+                            isSubscribed: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likesCount: {
+                    $size: "$likes"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isLiked: {
+                    $cond: {
+                        if: {$in: [req.user?._id, "$likes.likedBy"]},
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                "videoFile.url": 1,
+                title: 1,
+                description: 1,
+                views: 1,
+                createdAt: 1,
+                duration: 1,
+                comments: 1,
+                owner: 1,
+                likesCount: 1,
+                isLiked: 1
+            }
+        }
+    ]);
 
     if (!video) {
-        throw new apiError(404, "Video not found");
+        throw new apiError(500, "failed to fetch video");
     }
+
+    // increment views if video fetched successfully
+    await Video.findByIdAndUpdate(videoId, {
+        $inc: {
+            views: 1
+        }
+    });
+
+    // add this video to user watch history
+    await User.findByIdAndUpdate(req.user?._id, {
+        $addToSet: {
+            watchHistory: videoId
+        }
+    });
 
     return res
     .status(200)
     .json(
-        new apiResponse(200,video,"video found")
+        new apiResponse(200, video[0], "video details fetched successfully")
     )
 })
 
