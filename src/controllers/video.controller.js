@@ -209,7 +209,7 @@ const getVideoById = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1,
+                            avatar: 1,
                             subscribersCount: 1,
                             isSubscribed: 1
                         }
@@ -236,18 +236,18 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                "videoFile.url": 1,
+                videoFile: 1,
                 title: 1,
                 description: 1,
                 views: 1,
                 createdAt: 1,
                 duration: 1,
-                comments: 1,
+                // comments: 1,
                 owner: 1,
                 likesCount: 1,
                 isLiked: 1
             }
-        }
+        },
     ]);
 
     if (!video) {
@@ -258,7 +258,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     await Video.findByIdAndUpdate(videoId, {
         $inc: {
             views: 1
-        }
+        },
     });
 
     // add this video to user watch history
