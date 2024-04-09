@@ -1,4 +1,5 @@
 import mongoose from "mongoose"
+import {User} from "../models/user.model.js"
 import {Video} from "../models/video.model.js"
 import {Subscription} from "../models/subscription.model.js"
 import {Like} from "../models/like.model.js"
@@ -66,11 +67,39 @@ const getChannelStats = asyncHandler(async (req, res) => {
         }
     ]);
 
+    const totalLikes = video[0]?.totalLikes || 0
+    const totalViews = video[0]?.totalViews || 0
+    let monitizationPoints = 0
+    let monitizationStatus = false
+    let user = null
+
+    if(totalLikes >= 10 && totalViews >= 10){
+        monitizationPoints = Math.floor(totalViews / 10)
+        monitizationStatus = true
+
+        console.log(monitizationPoints);
+
+        user = await User.findByIdAndUpdate(
+            userId, 
+            {
+                $set : {
+                    monitizationPoints,
+                    monitizationStatus
+                }
+            },
+            {
+                new : true
+            }
+        )
+    }
+
     const channelStats = {
         totalSubscribers: totalSubscribers[0]?.subscribersCount || 0,
         totalLikes: video[0]?.totalLikes || 0,
         totalViews: video[0]?.totalViews || 0,
-        totalVideos: video[0]?.totalVideos || 0
+        totalVideos: video[0]?.totalVideos || 0,
+        monitizationPoints : monitizationPoints,
+        monitizationStatus : monitizationStatus,
     };
 
     return res
@@ -117,8 +146,8 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 1,
-                "videoFile.url": 1,
-                "thumbnail.url": 1,
+                videoFile: 1,
+                thumbnail: 1,
                 title: 1,
                 description: 1,
                 createdAt: {

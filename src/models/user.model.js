@@ -47,6 +47,16 @@ const userSchema = new Schema({
         required : [true, 'Password is Required']
     },
 
+    monitizationStatus : {
+        type : Boolean,
+        default : false
+    },
+
+    monitizationPoints : {
+        type : Number,
+        default : 0
+    },
+
     refreshToken : {
         type : String
     }

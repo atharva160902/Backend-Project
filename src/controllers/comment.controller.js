@@ -77,7 +77,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 owner: {
                     username: 1,
                     fullName: 1,
-                    "avatar.url": 1
+                    avatar: 1
                 },
                 isLiked: 1
             }
@@ -99,30 +99,30 @@ const addComment = asyncHandler(async (req, res) => {
     // add a comment to a video
 
     const { videoId } = req.params
-    const { text } = req.body
+    const { content } = req.body
 
     const video = await Video.findById(videoId)
 
     if (!video) {
-        return apiError(res, 404, "Video not found")
+        throw new apiError(res, 404, "Video not found")
     }
 
-    if (!text) {
-        return apiError(res, 400, "Comment is required")
+    if (!content) {
+        throw new apiError(res, 400, "Comment is required")
     }
 
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
-        return apiError(res, 400, "Invalid video ID")
+        throw new apiError(res, 400, "Invalid video ID")
     }
 
     const comment = await Comment.create({
-        videoId,
-        text,
-        user: req.user._id
+        video,
+        content,
+        owner : req.user._id
     })
 
     if (!comment) {
-        return apiError(res, 500, "Failed to add comment")
+        throw new apiError(res, 500, "Failed to add comment")
     }
 
     return res
@@ -137,20 +137,20 @@ const updateComment = asyncHandler(async (req, res) => {
     // update a comment
 
     const { commentId } = req.params
-    const { text } = req.body
+    const { content } = req.body
 
     const comment = await Comment.findById(commentId)
 
     if (!comment) {
-        return apiError(res, 404, "comment not found")
+        throw new apiError(res, 404, "comment not found")
     }
 
-    if (!text) {
-        return apiError(res, 400, "Comment is required")
+    if (!content) {
+        throw new apiError(res, 400, "Comment is required")
     }
 
     if (!mongoose.Types.ObjectId.isValid(commentId)) {
-        return apiError(res, 400, "Invalid comment ID")
+        throw new apiError(res, 400, "Invalid comment ID")
     }
 
     const updatedComment = await Comment.findByIdAndUpdate(
@@ -164,7 +164,7 @@ const updateComment = asyncHandler(async (req, res) => {
     );
 
     if (!updatedComment) {
-        return apiError(res, 500, "Failed to update comment")
+        throw new apiError(res, 500, "Failed to update comment")
     }
 
     return res
@@ -178,17 +178,19 @@ const deleteComment = asyncHandler(async (req, res) => {
     //delete a comment
 
     const { commentId } = req.params
-
+    
     const comment = await Comment.findById(commentId)
-
+    
     if (!comment) {
-        return apiError(res, 404, "comment not found")
+        throw new apiError(res, 404, "comment not found")
     }   
+    
+    // console.log(comment);
     
     if (comment?.owner.toString() !== req.user?._id.toString()) {
         throw new apiError(400, "only comment owner can delete their comment");
     }
-
+    
     const deletedComment = await Comment.findByIdAndDelete(commentId)
 
     return res

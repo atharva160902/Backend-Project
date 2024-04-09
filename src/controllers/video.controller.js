@@ -135,7 +135,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         title,
         description,
         duration:videoFile.duration ,
-        isPublished: false
+        isPublished: true
     })
 
     return res
@@ -236,6 +236,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
         {
             $project: {
+                thumbnail: 1,
                 videoFile: 1,
                 title: 1,
                 description: 1,
