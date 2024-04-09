@@ -8,11 +8,11 @@ import {Video} from "../models/video.model.js"
 
 const createPlaylist = asyncHandler(async (req, res) => {
     //create playlist
-
+    console.log(req);
     const {name, description} = req.body
 
     if (!name || !description) {
-        throw new ApiError(400, "name and description both are required");
+        throw new apiError(400, "name and description both are required");
     }
 
     const playlist = await Playlist.create({
@@ -22,12 +22,12 @@ const createPlaylist = asyncHandler(async (req, res) => {
     });
 
     if (!playlist) {
-        throw new ApiError(500, "failed to create playlist");
+        throw new apiError(500, "failed to create playlist");
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, playlist, "playlist created successfully")
+        .json(new apiResponse(200, playlist, "playlist created successfully")
     )
 })
 
@@ -146,8 +146,8 @@ const getPlaylistById = asyncHandler(async (req, res) => {
                 totalViews: 1,
                 videos: {
                     _id: 1,
-                    "videoFile.url": 1,
-                    "thumbnail.url": 1,
+                    videoFile: 1,
+                    thumbnail: 1,
                     title: 1,
                     description: 1,
                     duration: 1,
@@ -157,7 +157,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
                 owner: {
                     username: 1,
                     fullName: 1,
-                    "avatar.url": 1
+                    avatar: 1
                 }
             }
         }
@@ -277,7 +277,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        new apiResponse(200,{},"playlist updated successfully")
+        new apiResponse(200,{},"playlist deleted successfully")
     )
 })
 

@@ -52,7 +52,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
                     {
                         $project: {
                             username: 1,
-                            "avatar.url": 1,
+                            avatar: 1,
                         },
                     },
                 ],
@@ -121,7 +121,7 @@ const updateTweet = asyncHandler(async (req, res) => {
     const tweet = await Tweet.findById(tweetId);
 
     if (!tweet) {
-        throw new ApiError(404, "Tweet not found");
+        throw new apiError(404, "Tweet not found");
     }
 
     if(!isValidObjectId(tweetId)){
