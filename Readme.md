@@ -48,7 +48,7 @@ To get started with the YouTube-Backend, you will need to have Node.js and Mongo
 
 ```bash
 git clone
-cd YouTube-Backend
+cd Backend-Project
 npm install
 ```
 
