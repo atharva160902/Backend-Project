@@ -7,6 +7,10 @@ dotenv.config({
     path : './env'
 })
 
+app.get('/' , (req, res) => {
+    res.send("server is running")
+})
+
 connectBD().then(() => {
     app.listen(process.env.PORT || 5000, () => {
         console.log(`Server is running at port ${process.env.PORT}`);
