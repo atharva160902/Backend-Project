@@ -4,10 +4,10 @@ import connectBD from './db/index.js'
 import {app} from './app.js'
 
 dotenv.config({
-    path : './env'
+    path : '/env'
 })
 
-app.get('/' , (req, res) => {
+app.use('/' , (req, res) => {
     res.send("server is running")
 })
 
